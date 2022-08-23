@@ -5,9 +5,12 @@ const json = require('koa-json')
 const onerror = require('koa-onerror')
 const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
+const session = require('koa-generic-session')
+const redisStore = require('koa-redis')
 
 const blog = require('./routes/blog')
 const user = require('./routes/user')
+const { REDIS_CONF } = require('./config/db')
 
 // error handler
 onerror(app)
@@ -23,6 +26,22 @@ app.use(require('koa-static')(__dirname + '/public'))
 // app.use(views(__dirname + '/views', {
 //   extension: 'pug'
 // }))
+
+// session 配置
+app.keys = ['myblog_123456']
+app.use(session({
+  // 配置 cookie
+  cookie: {
+    path: '/',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  },
+  // 配置 redis
+  store: redisStore({
+    // all: '127.0.0.1:6379'   // 写死本地的 redis
+    all: `${REDIS_CONF.host}:${REDIS_CONF.port}`
+  })
+}))
 
 // logger
 app.use(async (ctx, next) => {
