@@ -1,4 +1,6 @@
 const Koa = require('koa')
+const path = require('path');
+const fs = require('fs');
 const app = new Koa()
 // const views = require('koa-views')
 const json = require('koa-json')
@@ -7,6 +9,7 @@ const bodyparser = require('koa-bodyparser')
 const logger = require('koa-logger')
 const session = require('koa-generic-session')
 const redisStore = require('koa-redis')
+const morgan = require('koa-morgan')
 
 const blog = require('./routes/blog')
 const user = require('./routes/user')
@@ -26,6 +29,21 @@ app.use(require('koa-static')(__dirname + '/public'))
 // app.use(views(__dirname + '/views', {
 //   extension: 'pug'
 // }))
+
+const ENV = process.env.NODE_ENV;
+
+if (ENV !== 'production') {
+  app.use(morgan('dev'));
+} else {
+  const fileName = path.join(__dirname, 'logs/access.log');
+  const writeStream = fs.createWriteStream(fileName, {
+    flags: 'a'
+  });
+
+  app.use(morgan('combined', {
+    stream: writeStream,
+  }))
+}
 
 // session 配置
 app.keys = ['myblog_123456']
