@@ -1,13 +1,25 @@
 const router = require('koa-router')()
+const { login } = require('../controller/user');
+const { SuccessModel, ErrorModel } = require('../module/resModel');
+const { escape } = require('../db/mysql');
+const { genPassword } = require('../utils/cryp');
 
-router.prefix('/users')
+router.prefix('/api/user')
 
-router.get('/', function (ctx, next) {
-  ctx.body = 'this is a users response!'
-})
+router.post('/login', async function (ctx, next) {
+  const { username, password } = ctx.request.body;
+  const name = escape(username);
+  // 加密
+  const genpsd = genPassword(password);
+  // 转义
+  const psd = escape(genpsd);
+  const data = await login(name, psd);
 
-router.get('/bar', function (ctx, next) {
-  ctx.body = 'this is a users/bar response'
+  if (data) {
+    ctx.body = new SuccessModel(data);
+  } else {
+    ctx.body = new ErrorModel('登录失败');
+  }
 })
 
 module.exports = router
